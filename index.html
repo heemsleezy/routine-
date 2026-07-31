@@ -453,9 +453,11 @@ function renderPlan(){
   const pct=info.total? info.done/info.total : 0;
 
   let secs="";
-  BLOCKS.forEach(([b,range])=>{
+  BLOCKS.forEach(([b])=>{
     const list=items.filter(i=>itemBlock(i)===b);
     if(!list.length) return;
+    const ts=list.map(i=>i.time).filter(Boolean).sort();
+    const range = ts.length ? (ts[0]===ts[ts.length-1] ? ts[0] : ts[0]+" – "+ts[ts.length-1]) : "";
     const dn=live? list.filter(i=>day.done[i.id]).length : 0;
     const open=isOpen(b);
     let rows="";
@@ -984,57 +986,24 @@ function switchTab(t){
   render(); window.scrollTo(0,0);
 }
 
-/* ---------- Vorlage ---------- */
-const MIND=["Beten","Journal","Buch lesen","In Stille sitzen"];
-const SPORT=["10–20 Klimmzüge","20–30 Liegestütze","20 Crunch Sit-ups","15 Beine heben","20 Crunch liegend, Arm zum Fuß (je Seite)"];
-const CARE=["Eiswürfel","Skincare","Zähne","Haar-Serum","Tabletten","Minoxidil","Bartöl (Bart + Augenbrauen)"];
-const FOOD=["Joghurt mit Honig","Müsli","Obst"];
-const BIZ=["bulltape / Tools","Kunden / Discord","X Post"];
-const BIZ2=["Deep Work Block","Charts / Journal"];
-const NIGHT=["Thank God","Journal: Tag + Emotionen","Morgen planen","Buch lesen + Gedanken notieren","10–15 Min still sitzen"];
-
-const TEMPLATE={
-  spaet:[
-    ["08:00","Aufstehen + Mind Time",MIND],
-    ["09:30","Sport",SPORT],
-    ["10:15","Wasser + Duschen",CARE],
-    ["10:45","Frühstück",FOOD],
-    ["11:00","Business",BIZ],
-    ["13:45","Arbeit Spätschicht"],
-    ["20:30","Abendessen"],
-    ["21:00","Business",BIZ2],
-    ["23:00","Night Routine",NIGHT],
-    ["23:30","Schlafen"]
-  ],
-  frueh:[
-    ["04:45","Aufstehen + Mind Time",["Beten","Journal","In Stille sitzen"]],
-    ["05:15","Frühstück",FOOD],
-    ["05:45","Los zur Arbeit"],
-    ["06:00","Arbeit Frühschicht"],
-    ["14:45","Sport",SPORT],
-    ["15:45","Wasser + Duschen",CARE],
-    ["16:30","Essen"],
-    ["17:00","Business",BIZ],
-    ["20:00","Abendessen"],
-    ["20:30","Business",BIZ2],
-    ["22:00","Night Routine",NIGHT],
-    ["22:30","Schlafen"]
-  ],
-  frei:[
-    ["08:00","Aufstehen + Mind Time",MIND],
-    ["09:30","Sport",SPORT],
-    ["10:15","Wasser + Duschen",CARE],
-    ["10:45","Frühstück",FOOD],
-    ["11:15","Business Deep Work",["bulltape / Tools","Feature bauen","Bugs fixen"]],
-    ["14:00","Mittagessen"],
-    ["15:00","Business",["Content / X","Kunden / Discord"]],
-    ["18:00","Freizeit"],
-    ["20:30","Abendessen"],
-    ["21:00","Business",BIZ2],
-    ["23:00","Night Routine",NIGHT],
-    ["23:30","Schlafen"]
-  ]
-};
+/* ---------- Vorlage (Basis = Frühplan) ---------- */
+const BASE=[
+  ["06:30","Aufstehen + Mind Time",["thank god","Journal (book)","clear thoughts"]],
+  ["06:50","Duschen & Skincare",["Eiswürfel","Skincare","Zähne","Tabletten","Minoxidil & Bartöl"]],
+  ["07:10","Frühstück",["Joghurt mit Müsli (Honig und Obst)"]],
+  ["07:30","Los zur Arbeit"],
+  ["14:00","Essen"],
+  ["14:30","Business"],
+  ["16:00","Sport",["10-20 Klimmzüge","20-30 Liegestütze","20 Crunchy Situps (Bauch)","15 Beine heben","20 Liegen in Crunch und Arme zum fuße (jeweils seite)"]],
+  ["17:00","Business",["bulltape / Tools","Kunden / Discord","X Post"]],
+  ["20:00","Abendessen"],
+  ["20:30","Business",["Deep Work Block","Charts / Journal"]],
+  ["21:30","Skincare",["Eiswürfel","Zähne","Tabletten","Minoxidil & Bartöl"]],
+  ["22:00","Night Routine",["Thank God","Journal: Tag + Emotionen","Morgen planen","Buch lesen + Gedanken notieren","10–15 Min still sitzen"]],
+  ["22:30","Schlafen"]
+];
+const TEMPLATE={ frueh:BASE, spaet:BASE, frei:BASE };
+const TEMPLATE_WEEK={0:"spaet",1:"spaet",2:"spaet",3:"spaet",4:"spaet",5:"frei",6:"frei"};
 function buildTemplate(){
   const mk=a=>a.map(x=>({id:uid(),time:x[0],name:x[1],subs:(x[2]||[]).map(n=>({id:uid(),name:n}))}));
   return { frueh:mk(TEMPLATE.frueh), spaet:mk(TEMPLATE.spaet), frei:mk(TEMPLATE.frei) };
@@ -1045,10 +1014,18 @@ function loadTemplate(){
   if(tab==="settings") renderSettings();
 }
 /* einmalig ausrollen */
-if(!localStorage.getItem(STORE+"_tpl1")){
+if(!localStorage.getItem(STORE+"_tpl2")){
   data.plans=buildTemplate();
-  for(let i=0;i<7;i++) if(data.week[i]===undefined) data.week[i]= i<5? "frueh":"frei";
-  localStorage.setItem(STORE+"_tpl1","1"); save();
+  for(let i=0;i<7;i++) if(data.week[i]===undefined) data.week[i]=TEMPLATE_WEEK[i];
+  localStorage.setItem(STORE+"_tpl2","1"); save();
+}
+
+if(!localStorage.getItem(STORE+"_fix1")){
+  const SKIN=["Eiswürfel","Zähne","Tabletten","Minoxidil & Bartöl"];
+  ["frueh","spaet","frei"].forEach(k=>(data.plans[k]||[]).forEach(it=>{
+    if(it.name==="Skincare" && (!it.subs||!it.subs.length)) it.subs=SKIN.map(n=>({id:uid(),name:n}));
+  }));
+  localStorage.setItem(STORE+"_fix1","1"); save();
 }
 
 if(!data.meta) data.meta={};
