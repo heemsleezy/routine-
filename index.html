@@ -343,7 +343,7 @@ function load(){
 function migrate(d){
   const out={ plans:{frueh:[],spaet:[],frei:[]}, week:d.week||{}, days:d.days||{}, meta:d.meta||{}, ui:d.ui||{} };
   ["frueh","spaet","frei"].forEach(s=>{
-    out.plans[s]=(d.plans&&d.plans[s]?d.plans[s]:[]).map(x=>({id:x.id,time:x.time||"",name:x.name,subs:x.subs||[]}));
+    out.plans[s]=(d.plans&&d.plans[s]?d.plans[s]:[]).map(x=>({id:x.id,time:x.time||"",name:x.name,blk:x.blk||"",subs:x.subs||[]}));
   });
   for(const k in out.days){
     const day=out.days[k];
@@ -409,6 +409,7 @@ function blockOf(t){
   if(h<17) return "Mittag";
   return "Abend";
 }
+function itemBlock(it){ return it.blk || blockOf(it.time); }
 function currentBlock(){ return blockOf(String(new Date().getHours()).padStart(2,"0")+":00"); }
 function isOpen(b){
   if(!data.ui.open) data.ui.open={};
@@ -453,7 +454,7 @@ function renderPlan(){
 
   let secs="";
   BLOCKS.forEach(([b,range])=>{
-    const list=items.filter(i=>blockOf(i.time)===b);
+    const list=items.filter(i=>itemBlock(i)===b);
     if(!list.length) return;
     const dn=live? list.filter(i=>day.done[i.id]).length : 0;
     const open=isOpen(b);
@@ -649,17 +650,27 @@ function saveNote(itemId,val){
   snapshot(day); save();
 }
 function snapshot(day){
-  day.snap=plan(day.shift||shiftOf(todayKey())).map(x=>({id:x.id,time:x.time,name:x.name,subs:(x.subs||[]).map(s=>({id:s.id,name:s.name}))}));
+  day.snap=plan(day.shift||shiftOf(todayKey())).map(x=>({id:x.id,time:x.time,name:x.name,blk:x.blk||"",subs:(x.subs||[]).map(s=>({id:s.id,name:s.name}))}));
 }
 
 let editId=null;
-function addItem(){ editId=null; openSheet("Neuer Punkt","",""); }
-function editItem(id){ const it=data.plans[viewShift].find(x=>x.id===id); if(!it) return; editId=id; openSheet("Punkt bearbeiten",it.time||"",it.name); }
-function openSheet(title,time,name){
+let sheetBlk="Morgen";
+function addItem(){ editId=null; openSheet("Neuer Punkt","","",currentBlock()); }
+function editItem(id){ const it=data.plans[viewShift].find(x=>x.id===id); if(!it) return; editId=id; openSheet("Punkt bearbeiten",it.time||"",it.name,itemBlock(it)); }
+let blkTouched=false;
+function pickBlk(b,manual){
+  if(manual) blkTouched=true;
+  sheetBlk=b;
+  document.querySelectorAll("[data-blk]").forEach(x=>x.classList.toggle("on",x.dataset.blk===b));
+}
+function openSheet(title,time,name,blk){
+  sheetBlk=blk||"Morgen"; blkTouched=false;
+  const picker=BLOCKS.map(([b])=>`<button data-blk="${b}" class="${sheetBlk===b?'on':''}" onclick="pickBlk('${b}',1)">${b}</button>`).join("");
   document.getElementById("sheet").innerHTML=`
     <h3>${title}</h3>
     <div class="sh-sub">${SHIFTS[viewShift]}</div>
-    <div class="field"><label>Uhrzeit</label><input id="inp-time" type="time" value="${esc(time)}"></div>
+    <div class="field"><label>Abschnitt</label><div class="switch" style="margin-top:0">${picker}</div></div>
+    <div class="field"><label>Uhrzeit</label><input id="inp-time" type="time" value="${esc(time)}" onchange="if(!blkTouched)pickBlk(blockOf(this.value))"></div>
     <div class="field"><label>Hauptpunkt</label><input id="inp" placeholder="z.B. Business Block" value="${esc(name)}"></div>
     <div class="actions">
       ${editId?'<button class="btn-del" onclick="removeItem(editId)">Löschen</button>':''}
@@ -673,8 +684,8 @@ function saveItem(){
   const v=document.getElementById("inp").value.trim();
   const t=document.getElementById("inp-time").value;
   if(!v){ document.getElementById("inp").focus(); return; }
-  if(editId){ const it=data.plans[viewShift].find(x=>x.id===editId); it.name=v; it.time=t; }
-  else data.plans[viewShift].push({id:uid(),time:t,name:v,subs:[]});
+  if(editId){ const it=data.plans[viewShift].find(x=>x.id===editId); it.name=v; it.time=t; it.blk=sheetBlk; }
+  else data.plans[viewShift].push({id:uid(),time:t,name:v,blk:sheetBlk,subs:[]});
   save(); closeSheet(); renderPlan();
 }
 function removeItem(id){
@@ -914,7 +925,7 @@ function renderSettings(){
 }
 function copyPlan(from,to){
   if(!confirm(SHIFTS[to]+"-Plan mit dem "+SHIFTS[from]+"-Plan überschreiben?")) return;
-  data.plans[to]=data.plans[from].map(x=>({id:uid(),time:x.time,name:x.name,subs:(x.subs||[]).map(s=>({id:uid(),name:s.name}))}));
+  data.plans[to]=data.plans[from].map(x=>({id:uid(),time:x.time,name:x.name,blk:x.blk||"",subs:(x.subs||[]).map(s=>({id:uid(),name:s.name}))}));
   save(); toast("Plan kopiert");
 }
 
