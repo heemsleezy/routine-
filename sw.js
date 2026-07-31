@@ -1,4 +1,4 @@
-const CACHE = "routine-v2-8";
+const CACHE = "routine-v3-0";
 const ASSETS = ["./", "./index.html", "./manifest.json"];
 
 self.addEventListener("install", e => {

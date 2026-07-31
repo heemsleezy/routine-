@@ -986,26 +986,56 @@ function switchTab(t){
   render(); window.scrollTo(0,0);
 }
 
-/* ---------- Vorlage (Basis = Frühplan) ---------- */
-const BASE=[
-  ["06:30","Aufstehen + Mind Time",["thank god","Journal (book)","clear thoughts"]],
-  ["06:50","Duschen & Skincare",["Eiswürfel","Skincare","Zähne","Tabletten","Minoxidil & Bartöl"]],
-  ["07:10","Frühstück",["Joghurt mit Müsli (Honig und Obst)"]],
-  ["07:30","Los zur Arbeit"],
-  ["14:00","Essen"],
-  ["14:30","Business"],
-  ["16:00","Sport",["10-20 Klimmzüge","20-30 Liegestütze","20 Crunchy Situps (Bauch)","15 Beine heben","20 Liegen in Crunch und Arme zum fuße (jeweils seite)"]],
-  ["17:00","Business",["bulltape / Tools","Kunden / Discord","X Post"]],
-  ["20:00","Abendessen"],
-  ["20:30","Business",["Deep Work Block","Charts / Journal"]],
-  ["21:30","Skincare",["Eiswürfel","Zähne","Tabletten","Minoxidil & Bartöl"]],
-  ["22:00","Night Routine",["Thank God","Journal: Tag + Emotionen","Morgen planen","Buch lesen + Gedanken notieren","10–15 Min still sitzen"]],
-  ["22:30","Schlafen"]
-];
-const TEMPLATE={ frueh:BASE, spaet:BASE, frei:BASE };
-const TEMPLATE_WEEK={0:"spaet",1:"spaet",2:"spaet",3:"spaet",4:"spaet",5:"frei",6:"frei"};
+/* ---------- Vorlage (Stand 31.07.2026) ---------- */
+const TEMPLATE={
+  frueh:[
+    {t:"06:30", n:"Aufstehen + Mind Time", s:["thank god", "Journal (book)", "clear thoughts"]},
+    {t:"06:50", n:"Duschen & Skincare", s:["Eiswürfel", "Skincare", "Zähne", "Minoxidil & Bartöl", "Tabletten"]},
+    {t:"07:10", n:"Frühstück", s:["Joghurt mit Müsli (Honig und Obst)"]},
+    {t:"07:30", n:"Los zur Arbeit"},
+    {t:"14:00", n:"Essen"},
+    {t:"14:30", n:"Business"},
+    {t:"16:00", n:"Sport", s:["10-20 Klimmzüge", "20-30 Liegestütze", "20 Crunchy Situps (Bauch)", "15 Beine heben", "20 Liegen in Crunch und Arme zum fuße (jeweils seite)"]},
+    {t:"17:00", n:"Business"},
+    {t:"20:00", n:"Abendessen"},
+    {t:"20:30", n:"Business"},
+    {t:"21:30", n:"Skincare", s:["Eiswürfel", "Zähne", "Tabletten", "Minoxidil & Bartöl"]},
+    {t:"22:00", n:"Night Routine", s:["Thank God", "Journal: Tag + Emotionen", "Buch lesen + Gedanken notieren", "10–15 Min still sitzen"]},
+    {t:"22:30", n:"Schlafen", s:["Wecker 6:30Uhr"]}
+  ],
+  spaet:[
+    {t:"08:30", n:"Aufstehen + Mind Time", b:"Morgen", s:["thank god", "Journal (book)", "clear thoughts"]},
+    {t:"09:30", n:"Duschen & Skincare", b:"Morgen", s:["Eiswürfel", "Skincare", "Zähne", "Tabletten", "Minoxidil & Bartöl"]},
+    {t:"10:00", n:"Frühstück", b:"Morgen", s:["Joghurt mit Müsli (Honig und Obst)"]},
+    {t:"10:30", n:"Business", b:"Morgen"},
+    {t:"09:00", n:"Sport", b:"Morgen", s:["10-20 Klimmzüge", "20-30 Liegestütze", "20 Crunchy Situps (Bauch)", "15 Beine heben", "20 Liegen in Crunch und Arme zum fuße (jeweils seite)"]},
+    {t:"20:45", n:"Business", b:"Abend"},
+    {t:"20:15", n:"Abendessen", b:"Abend"},
+    {t:"23:00", n:"Skincare", b:"Abend", s:["Eiswürfel", "Zähne", "Tabletten", "Minoxidil & Bartöl"]},
+    {t:"23:15", n:"Night Routine", b:"Abend", s:["Thank God", "Journal: Tag + Emotionen", "Morgen planen", "Buch lesen + Gedanken notieren", "10–15 Min still sitzen"]},
+    {t:"13:30", n:"los Arbeit", b:"Mittag"},
+    {t:"23:45", n:"sleep", b:"Abend", s:["Wecker 8:30Uhr"]}
+  ],
+  frei:[
+    {t:"09:00", n:"Aufstehen + Mind Time", b:"Morgen", s:["thank god", "Journal (book)", "clear thoughts"]},
+    {t:"09:30", n:"Duschen & Skincare", b:"Morgen", s:["Eiswürfel", "Skincare", "Zähne", "Tabletten", "Minoxidil & Bartöl"]},
+    {t:"10:30", n:"Frühstück", b:"Morgen", s:["Joghurt mit Müsli (Honig und Obst)"]},
+    {t:"14:00", n:"Essen"},
+    {t:"11:00", n:"Business", b:"Morgen"},
+    {t:"09:30", n:"Sport", b:"Morgen", s:["10-20 Klimmzüge", "20-30 Liegestütze", "20 Crunchy Situps (Bauch)", "15 Beine heben", "20 Liegen in Crunch und Arme zum fuße (jeweils seite)"]},
+    {t:"17:00", n:"Business", s:["bulltape / Tools", "Kunden / Discord", "X Post"]},
+    {t:"20:00", n:"Abendessen"},
+    {t:"21:00", n:"Business", b:"Abend"},
+    {t:"22:00", n:"Skincare", b:"Abend", s:["Eiswürfel", "Zähne", "Tabletten", "Minoxidil & Bartöl"]},
+    {t:"22:15", n:"Night Routine", b:"Abend", s:["Thank God", "Journal: Tag + Emotionen", "Morgen planen", "Buch lesen + Gedanken notieren", "10–15 Min still sitzen"]},
+    {t:"23:00", n:"Schlafen", b:"Abend", s:["Wecker 9Uhr"]},
+    {t:"14:30", n:"Business", b:"Mittag"},
+    {t:"16:30", n:"Spazieren", b:"Mittag"}
+  ]
+};
+const TEMPLATE_WEEK={"0": "spaet", "1": "spaet", "2": "spaet", "3": "spaet", "4": "spaet", "5": "frei", "6": "frei"};
 function buildTemplate(){
-  const mk=a=>a.map(x=>({id:uid(),time:x[0],name:x[1],subs:(x[2]||[]).map(n=>({id:uid(),name:n}))}));
+  const mk=a=>a.map(x=>({id:uid(),time:x.t||"",name:x.n,blk:x.b||"",subs:(x.s||[]).map(n=>({id:uid(),name:n}))}));
   return { frueh:mk(TEMPLATE.frueh), spaet:mk(TEMPLATE.spaet), frei:mk(TEMPLATE.frei) };
 }
 function loadTemplate(){
@@ -1018,14 +1048,6 @@ if(!localStorage.getItem(STORE+"_tpl2")){
   data.plans=buildTemplate();
   for(let i=0;i<7;i++) if(data.week[i]===undefined) data.week[i]=TEMPLATE_WEEK[i];
   localStorage.setItem(STORE+"_tpl2","1"); save();
-}
-
-if(!localStorage.getItem(STORE+"_fix1")){
-  const SKIN=["Eiswürfel","Zähne","Tabletten","Minoxidil & Bartöl"];
-  ["frueh","spaet","frei"].forEach(k=>(data.plans[k]||[]).forEach(it=>{
-    if(it.name==="Skincare" && (!it.subs||!it.subs.length)) it.subs=SKIN.map(n=>({id:uid(),name:n}));
-  }));
-  localStorage.setItem(STORE+"_fix1","1"); save();
 }
 
 if(!data.meta) data.meta={};
